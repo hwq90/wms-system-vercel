@@ -24,9 +24,9 @@ export default function Dashboard() {
 
   const loadStats = async () => {
     try {
-      const materials = await materialApi.getAll()
-      const inventory = await inventoryApi.getAll()
-      const orders = await orderApi.getAll()
+      const materials = await materialApi.getAll() || []
+      const inventory = await inventoryApi.getAll() || []
+      const orders = await orderApi.getAll() || []
 
       const warnings = inventory.filter(item => {
         const material = materials.find(m => m.id === item.material_id)
