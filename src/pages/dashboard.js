@@ -128,6 +128,30 @@ export default function Dashboard() {
               <div className="text-2xl mb-2">🏢</div>
               <div className="text-sm text-gray-600">供应商</div>
             </Link>
+            <Link href="/scan-in" className="bg-white rounded-xl p-4 shadow-sm text-center hover:shadow-md transition">
+              <div className="text-2xl mb-2">📥</div>
+              <div className="text-sm text-gray-600">扫码入库</div>
+            </Link>
+            <Link href="/scan-out" className="bg-white rounded-xl p-4 shadow-sm text-center hover:shadow-md transition">
+              <div className="text-2xl mb-2">📤</div>
+              <div className="text-sm text-gray-600">扫码出库</div>
+            </Link>
+            <Link href="/current-inventory" className="bg-white rounded-xl p-4 shadow-sm text-center hover:shadow-md transition">
+              <div className="text-2xl mb-2">📈</div>
+              <div className="text-sm text-gray-600">即时库存</div>
+            </Link>
+            <Link href="/smart-picking" className="bg-white rounded-xl p-4 shadow-sm text-center hover:shadow-md transition">
+              <div className="text-2xl mb-2">🤖</div>
+              <div className="text-sm text-gray-600">智能拣货</div>
+            </Link>
+            <Link href="/barcode-management" className="bg-white rounded-xl p-4 shadow-sm text-center hover:shadow-md transition">
+              <div className="text-2xl mb-2">🏷️</div>
+              <div className="text-sm text-gray-600">条形码管理</div>
+            </Link>
+            <Link href="/locations" className="bg-white rounded-xl p-4 shadow-sm text-center hover:shadow-md transition">
+              <div className="text-2xl mb-2">📍</div>
+              <div className="text-sm text-gray-600">库位管理</div>
+            </Link>
           </div>
         </div>
       </div>

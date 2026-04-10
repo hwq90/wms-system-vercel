@@ -115,7 +115,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500">
-          <p>默认账号: hwq / 568394</p>
+          <p>请使用您的账号登录</p>
         </div>
       </div>
     </div>
