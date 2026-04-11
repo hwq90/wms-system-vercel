@@ -87,12 +87,10 @@ export default function Dashboard() {
       time: new Date().toLocaleString(), ip: 'client'
     }
     setAuditLogs(prev => [log, ...prev].slice(0, 100))
-    localStorage.setItem('auditLogs', JSON.stringify([log, ...prev]))
   }
 
   const autoBackup = () => {
     const data = { stats, auditLogs, time: new Date() }
-    localStorage.setItem('backup_' + Date.now(), JSON.stringify(data))
     addAuditLog('自动备份', 'system', null, null)
   }
 
@@ -136,7 +134,7 @@ export default function Dashboard() {
   const addLocation = () => {
     const name = prompt(t.locationName)
     if (!name) return
-    const newLoc = { id: Date.now(), name, code: `LOC${Date.now().toString().slice(-6)}` }
+    const newLoc = { id: Date.now(), name, code: 'LOC' + Date.now().toString().slice(-6) }
     setLocations(prev => [...prev, newLoc])
     addAuditLog('新增库位', 'location', null, name)
   }
@@ -176,7 +174,7 @@ export default function Dashboard() {
         const b = bt.find(x => x.material_id === it.material_id) || {}
         const l = loc.find(x => x.id === it.location_id) || {}
         return {
-          id: idx, materialName: m.name || `物料${it.material_id}`,
+          id: idx, materialName: m.name || '物料' + it.material_id,
           batchNo: b.no || '-', location: l.name || '-',
           quantity: it.quantity || 0, minStock: m.min_stock || 5,
           expireDate: it.expireDate ? new Date(it.expireDate).toLocaleDateString() : '-'
@@ -199,15 +197,19 @@ export default function Dashboard() {
         orders: od.length, warnings, expireWarnings,
         warehouses: ws.length, suppliers: su.length, batches: bt.length
       })
-    } catch (e) {} finally { setLoading(false) }
+    } catch (e) {
+      console.log(e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
     if (!search) return setSearchResult([])
     setSearchResult([
-      { id:1, text:`物料: ${search}`, type:'material' },
-      { id:2, text:`批次: BATCH-${search.slice(0,4)}`, type:'batch' },
-      { id:3, text:`库位: LOC-${search.toUpperCase()}`, type:'location' }
+      { id:1, text:'物料: ' + search, type:'material' },
+      { id:2, text:'批次: BATCH-' + search.slice(0,4), type:'batch' },
+      { id:3, text:'库位: LOC-' + search.toUpperCase(), type:'location' }
     ])
   }, [search])
 
@@ -221,24 +223,24 @@ export default function Dashboard() {
     const sheet = XLSX.utils.json_to_sheet(auditLogs.slice(0,50))
     const book = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(book, sheet, '流水报表')
-    XLSX.writeFile(book, `WMS流水报表_${new Date().toLocaleDateString()}.xlsx`)
+    XLSX.writeFile(book, 'WMS流水报表_' + new Date().toLocaleDateString() + '.xlsx')
     addAuditLog('导出报表', 'report', null, 'Excel')
   }
 
   const printTemplate = (type) => {
-    let content = ''
-    if (type === 'in') {
-      content = `入库单\n物料:XXX\n批次:BATCH-XXXX\n库位:LOC-A1\n操作员:${user?.username}`
-    } else if (type === 'out') {
-      content = '出库单...'
-    } else if (type === 'check') {
-      content = '盘点单...'
-    } else if (type === 'label') {
-      content = '条码标签...'
+    let content = ""
+    if (type === "in") {
+      content = "入库单"
+    } else if (type === "out") {
+      content = "出库单"
+    } else if (type === "check") {
+      content = "盘点单"
+    } else if (type === "label") {
+      content = "条码标签"
     }
-
-    window.open().document.write(`<pre>${content}</pre>`)
-    addAuditLog('打印', type, null, content)
+    const w = window.open()
+    w.document.write("<pre>" + content + "</pre>")
+    w.document.close()
   }
 
   if (!user || loading) return <div className="min-h-screen flex items-center justify-center">加载中...</div>
@@ -247,7 +249,7 @@ export default function Dashboard() {
     <div className={`min-h-screen bg-gray-100 text-sm md:text-base ${pdaMode ? 'text-lg' : ''}`}>
       <header className="bg-blue-600 text-white p-2 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
-          <h1 className="font-bold">🏬 WMS</h1>
+          <h1 className="font-bold">WMS 仓库管理系统</h1>
           <div className="flex gap-1 flex-wrap text-xs">
             <button onClick={()=>setLang('zh')} className="px-1 bg-white/20 rounded">中</button>
             <button onClick={()=>setLang('en')} className="px-1 bg-white/20 rounded">EN</button>
@@ -270,13 +272,18 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto px-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 mb-3">
         {[
-          { icon:'📦', val:stats.materials, label:t.materials }, { icon:'📊', val:stats.inventory, label:t.inventory },
-          { icon:'📦', val:stats.batches, label:'批次' }, { icon:'⚠️', val:stats.warnings, label:t.warning },
-          { icon:'⏳', val:stats.expireWarnings, label:'到期' }, { icon:'🏭', val:stats.warehouses, label:'仓库' },
+          { icon:'📦', val:stats.materials, label:t.materials },
+          { icon:'📊', val:stats.inventory, label:t.inventory },
+          { icon:'📦', val:stats.batches, label:'批次' },
+          { icon:'⚠️', val:stats.warnings, label:t.warning },
+          { icon:'⏳', val:stats.expireWarnings, label:'到期' },
+          { icon:'🏭', val:stats.warehouses, label:'仓库' },
           { icon:'🏢', val:stats.suppliers, label:'供应商' },
         ].map((it,i)=>(
           <div key={i} className="bg-white p-2 rounded-xl text-center shadow">
-            <div className="text-xl">{it.icon}</div><div className="font-bold">{it.val}</div><div className="text-xs text-gray-500">{it.label}</div>
+            <div className="text-xl">{it.icon}</div>
+            <div className="font-bold">{it.val}</div>
+            <div className="text-xs text-gray-500">{it.label}</div>
           </div>
         ))}
       </div>
@@ -285,7 +292,10 @@ export default function Dashboard() {
         <div className="bg-white p-3 rounded-xl shadow">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={[{day:'1',in:22,out:18},{day:'2',in:15,out:30},{day:'3',in:35,out:12}]}>
-              <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="day" /><YAxis /><Tooltip />
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="day" />
+              <YAxis />
+              <Tooltip />
               <Line type="monotone" dataKey="in" stroke="#3b82f6" name="入库" />
               <Line type="monotone" dataKey="out" stroke="#ef4444" name="出库" />
             </LineChart>
@@ -294,17 +304,31 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-2 mb-4">
-        <div className="bg-white p-3 rounded-xl shadow"><h3 className="font-bold mb-2">{t.realTimeInventory}</h3>
+        <div className="bg-white p-3 rounded-xl shadow">
+          <h3 className="font-bold mb-2">{t.realTimeInventory}</h3>
           <div className="overflow-x-auto max-h-44">
-            <table className="w-full text-xs"><thead className="bg-gray-100">
-              <tr><th className="p-1 text-left">物料</th><th className="p-1 text-left">{t.batch}</th><th className="p-1 text-left">{t.location}</th><th className="p-1 text-right">{t.qty}</th><th className="p-1 text-left">{t.expireDate}</th></tr>
-            </thead><tbody>
-              {realTimeInventory.slice(0,20).map(i=>(
-                <tr key={i.id} className="border-b">
-                  <td className="p-1">{i.materialName}</td><td className="p-1">{i.batchNo}</td><td className="p-1">{i.location}</td><td className="p-1 text-right">{i.quantity}</td><td className="p-1">{i.expireDate}</td>
+            <table className="w-full text-xs">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-1 text-left">物料</th>
+                  <th className="p-1 text-left">{t.batch}</th>
+                  <th className="p-1 text-left">{t.location}</th>
+                  <th className="p-1 text-right">{t.qty}</th>
+                  <th className="p-1 text-left">{t.expireDate}</th>
                 </tr>
-              ))}
-            </tbody></table>
+              </thead>
+              <tbody>
+                {realTimeInventory.slice(0,20).map(i=>(
+                  <tr key={i.id} className="border-b">
+                    <td className="p-1">{i.materialName}</td>
+                    <td className="p-1">{i.batchNo}</td>
+                    <td className="p-1">{i.location}</td>
+                    <td className="p-1 text-right">{i.quantity}</td>
+                    <td className="p-1">{i.expireDate}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -316,23 +340,39 @@ export default function Dashboard() {
             <button onClick={generatePickList} className="bg-orange-500 text-white px-2 py-1 rounded text-xs">{t.generatePick}</button>
           </div>
           <div className="overflow-x-auto max-h-44">
-            {pickList.length === 0 ? <div className="text-xs text-gray-500 py-2">{t.pickEmpty}</div> : (
-              <table className="w-full text-xs"><thead className="bg-gray-100">
-                <tr><th className="p-1 text-left">物料</th><th className="p-1 text-left">{t.location}</th><th className="p-1 text-left">{t.batch}</th><th className="p-1 text-right">库存</th><th className="p-1 text-right text-orange-600">{t.pickQty}</th></tr>
-              </thead><tbody>
-                {pickList.map(i=>(
-                  <tr key={i.id} className="border-b">
-                    <td className="p-1">{i.materialName}</td><td className="p-1">{i.location}</td><td className="p-1">{i.batchNo}</td><td className="p-1 text-right">{i.quantity}</td><td className="p-1 text-right font-bold text-orange-600">{i.pickQty}</td>
+            {pickList.length === 0 ? (
+              <div className="text-xs text-gray-500 py-2">{t.pickEmpty}</div>
+            ) : (
+              <table className="w-full text-xs">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-1 text-left">物料</th>
+                    <th className="p-1 text-left">{t.location}</th>
+                    <th className="p-1 text-left">{t.batch}</th>
+                    <th className="p-1 text-right">库存</th>
+                    <th className="p-1 text-right text-orange-600">{t.pickQty}</th>
                   </tr>
-                ))}
-              </tbody></table>
+                </thead>
+                <tbody>
+                  {pickList.map(i=>(
+                    <tr key={i.id} className="border-b">
+                      <td className="p-1">{i.materialName}</td>
+                      <td className="p-1">{i.location}</td>
+                      <td className="p-1">{i.batchNo}</td>
+                      <td className="p-1 text-right">{i.quantity}</td>
+                      <td className="p-1 text-right font-bold text-orange-600">{i.pickQty}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-2 mb-4">
-        <div className="bg-white p-3 rounded-xl shadow"><h3 className="font-bold mb-2">{t.returnManage}</h3>
+        <div className="bg-white p-3 rounded-xl shadow">
+          <h3 className="font-bold mb-2">{t.returnManage}</h3>
           <div className="flex gap-2 mb-2">
             <input value={returnForm.material} onChange={(e)=>setReturnForm({...returnForm, material:e.target.value})} placeholder={t.returnMaterial} className="p-1 border rounded flex-1 text-xs" />
             <input type="number" value={returnForm.qty} onChange={(e)=>setReturnForm({...returnForm, qty:+e.target.value})} className="p-1 border rounded w-16 text-xs" />
@@ -340,20 +380,38 @@ export default function Dashboard() {
             <button onClick={addReturn} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{t.returnAdd}</button>
           </div>
           <div className="overflow-x-auto max-h-40 text-xs">
-            <table className="w-full"><thead className="bg-gray-100">
-              <tr><th className="p-1 text-left">{t.returnMaterial}</th><th className="p-1 text-right">{t.returnQty}</th><th className="p-1 text-left">{t.returnReason}</th><th className="p-1 text-left">{t.returnStatus}</th><th className="p-1 text-left">{t.returnTime}</th><th className="p-1"></th></tr>
-            </thead><tbody>
-              {returnList.map(r=>(
-                <tr key={r.id} className="border-b">
-                  <td className="p-1">{r.material}</td><td className="p-1 text-right">{r.qty}</td><td className="p-1">{r.reason}</td>
-                  <td className="p-1">{r.status==='done'?<span className="text-green-600">{t.returnDone}</span>:<span className="text-orange-600">{t.returnWait}</span>}</td>
-                  <td className="p-1 text-xs">{r.time}</td>
-                  {r.status!=='done' && (
-                    <button onClick={()=>finishReturn(r.id)} className="bg-green-600 text-white p-1 rounded text-xs">完成</button>
-                  )}
+            <table className="w-full">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-1 text-left">{t.returnMaterial}</th>
+                  <th className="p-1 text-right">{t.returnQty}</th>
+                  <th className="p-1 text-left">{t.returnReason}</th>
+                  <th className="p-1 text-left">{t.returnStatus}</th>
+                  <th className="p-1 text-left">{t.returnTime}</th>
+                  <th className="p-1"></th>
                 </tr>
-              ))}
-            </tbody></table>
+              </thead>
+              <tbody>
+                {returnList.map(r=>(
+                  <tr key={r.id} className="border-b">
+                    <td className="p-1">{r.material}</td>
+                    <td className="p-1 text-right">{r.qty}</td>
+                    <td className="p-1">{r.reason}</td>
+                    <td className="p-1">
+                      {r.status==='done' ? (
+                        <span className="text-green-600">{t.returnDone}</span>
+                      ) : (
+                        <span className="text-orange-600">{t.returnWait}</span>
+                      )}
+                    </td>
+                    <td className="p-1 text-xs">{r.time}</td>
+                    {r.status!=='done' && (
+                      <button onClick={()=>finishReturn(r.id)} className="bg-green-600 text-white p-1 rounded text-xs">完成</button>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -365,17 +423,26 @@ export default function Dashboard() {
             <button onClick={addLocation} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">+ 库位</button>
           </div>
           <div className="overflow-x-auto max-h-44 text-xs">
-            <table className="w-full"><thead className="bg-gray-100">
-              <tr><th className="p-1 text-left">{t.locationName}</th><th className="p-1 text-left">{t.locationBarcode}</th><th className="p-1"></th><th className="p-1"></th></tr>
-            </thead><tbody>
-              {locations.map(l=>(
-                <tr key={l.id} className="border-b">
-                  <td className="p-1">{l.name}</td><td className="p-1 font-mono">{l.code}</td>
-                  <td><button onClick={()=>setEditLoc(l)} className="text-blue-600 p-1 text-xs">{t.locationEdit}</button></td>
-                  <td><button onClick={()=>printBarcode(l.code)} className="text-green-600 p-1 text-xs">{t.printBarcode}</button></td>
+            <table className="w-full">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-1 text-left">{t.locationName}</th>
+                  <th className="p-1 text-left">{t.locationBarcode}</th>
+                  <th className="p-1"></th>
+                  <th className="p-1"></th>
                 </tr>
-              ))}
-            </tbody></table>
+              </thead>
+              <tbody>
+                {locations.map(l=>(
+                  <tr key={l.id} className="border-b">
+                    <td className="p-1">{l.name}</td>
+                    <td className="p-1 font-mono">{l.code}</td>
+                    <td><button onClick={()=>setEditLoc(l)} className="text-blue-600 p-1 text-xs">{t.locationEdit}</button></td>
+                    <td><button onClick={()=>printBarcode(l.code)} className="text-green-600 p-1 text-xs">{t.printBarcode}</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           {editLoc && (
             <div className="mt-2 flex gap-2">
@@ -413,7 +480,7 @@ export default function Dashboard() {
           <h3 className="font-bold text-sm mb-2">操作审计日志</h3>
           {auditLogs.slice(0,20).map((log,i)=>(
             <div key={i} className="text-xs border-b py-1 text-gray-700">
-              [{log.time}] {log.user} | {log.action} | {log.target} {log.oldVal&&`←${log.oldVal}`} {log.newVal&&`→${log.newVal}`}
+              [{log.time}] {log.user} | {log.action} | {log.target}
             </div>
           ))}
         </div>
